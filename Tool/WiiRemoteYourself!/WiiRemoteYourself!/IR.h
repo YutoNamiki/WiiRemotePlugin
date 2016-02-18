@@ -10,7 +10,7 @@ enum class IRMode : unsigned char
 	Full = 0x05,
 };
 
-struct Dot
+struct IRDot
 {
 	bool Visible;
 	Vector2D<unsigned int> RawData;
@@ -24,5 +24,5 @@ struct IR
 	static const unsigned int MaxRawY = 767;
 
 	IRMode Mode;
-	Dot Dot[4];
+	IRDot Dots[4];
 };
