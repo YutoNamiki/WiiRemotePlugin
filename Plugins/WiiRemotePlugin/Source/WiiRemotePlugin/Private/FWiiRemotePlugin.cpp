@@ -84,6 +84,7 @@ IMPLEMENT_MODULE(FWiiRemotePlugin, WiiRemotePlugin)
 
 void FWiiRemotePlugin::StartupModule()
 {
+	UE_LOG(WiiRemotePluginLog, Warning, TEXT("Startup WiiRemote Plugin Module."));
 	UE_LOG(WiiRemotePluginLog, Log, TEXT("Using WiiRemote Plugin verison %s"), *PluginVersion);
 	wiiRemoteManager = NewObject<UWiiRemoteManager>();
 	EKeys::AddKey(FKeyDetails(EWiiRemoteKeys::A, LOCTEXT("WiiRemoteA", "WiiRemote A"), FKeyDetails::GamepadKey, FName("WiiRemote")));
@@ -183,6 +184,37 @@ void FWiiRemotePlugin::Tick(float deltaTime)
 	wiiRemoteManager->Tick(deltaTime);
 }
 
+void FWiiRemotePlugin::SetReportType(int32 playerIndex, ReportType reportType)
+{
+	if (playerIndex < 0 || playerIndex > 4)
+		return;
+	auto wiiRemote = &wiiRemoteManager->WiiRemotes[playerIndex];
+	if (wiiRemote->IsConnected())
+	{
+		switch (reportType)
+		{
+		case ReportType::Buttons:
+			wiiRemote->SetReportType(InputReport::Buttons);
+			break;
+		case ReportType::ButtonsAcceleration:
+			wiiRemote->SetReportType(InputReport::ButtonsAcceleration);
+			break;
+		case ReportType::ButtonsAccelerationIR:
+			wiiRemote->SetReportType(InputReport::ButtonsAccelerationIR);
+			break;
+		case ReportType::ButtonsAccelerationExtension:
+			wiiRemote->SetReportType(InputReport::ButtonsAccelerationExtension);
+			break;
+		case ReportType::ButtonsAccelerationIRExtension:
+			wiiRemote->SetReportType(InputReport::ButtonsAccelerationIRExtension);
+			break;
+		case ReportType::ButtonsBalanceBoard:
+			wiiRemote->SetReportType(InputReport::ButtonsBalanceBoard);
+			break;
+		}
+	}
+}
+
 void FWiiRemotePlugin::SetLED(int32 playerIndex, WiiRemoteLED ledBits)
 {
 	if (playerIndex < 0 || playerIndex > 4)
@@ -226,8 +258,8 @@ void FWiiRemotePlugin::PlaySquareWave(int32 playerIndex, WiiRemoteSpeakerFrequen
 	auto wiiRemote = &wiiRemoteManager->WiiRemotes[playerIndex];
 	if (wiiRemote->IsConnected())
 	{
-		if (wiiRemote->Speaker.bEnabled)
-			wiiRemote->PlaySquareWave(static_cast<speaker_freq>(frequency), static_cast<BYTE>(volume));
+		if (wiiRemote->Speaker.Enabled)
+			wiiRemote->PlaySquareWave(static_cast<SpeakerFrequency>(frequency), static_cast<BYTE>(volume));
 	}
 }
 
@@ -238,13 +270,13 @@ void FWiiRemotePlugin::PlaySample(int32 playerIndex, FWiiRemoteSample* sample, W
 	auto wiiRemote = &wiiRemoteManager->WiiRemotes[playerIndex];
 	if (wiiRemote->IsConnected())
 	{
-		if (wiiRemote->Speaker.bEnabled)
+		if (wiiRemote->Speaker.Enabled)
 		{
-			wiimote_sample sam;
-			sam.freq = static_cast<speaker_freq>(sample->Frequency);
-			sam.length = sample->Length;
-			sam.samples = sample->Samples.GetData();
-			wiiRemote->PlaySample(sam, volume, static_cast<speaker_freq>(frequency));
+			WiiRemoteSample sam;
+			sam.Frequency = static_cast<SpeakerFrequency>(sample->Frequency);
+			sam.Length = sample->Length;
+			sam.Samples = sample->Samples.GetData();
+			wiiRemote->PlaySample(sam, volume, static_cast<SpeakerFrequency>(frequency));
 		}
 	}
 }
@@ -256,7 +288,7 @@ FWiiRemoteDeviceData* FWiiRemotePlugin::LatestData(int32 wiiRemoteId)
 	return &(wiiRemoteManager->Data[wiiRemoteId - 1]);
 }
 
-void FWiiRemotePlugin::MaxWiiRemoteId(int32 & wiiRemoteId)
+void FWiiRemotePlugin::MaxWiiRemoteId(int32& wiiRemoteId)
 {
 	wiiRemoteId = wiiRemoteManager->Data.Num();
 }
